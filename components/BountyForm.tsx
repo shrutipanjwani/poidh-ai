@@ -7,15 +7,32 @@ import Button from "./Button";
 
 const contractAddress = "0xb502c5856F7244DccDd0264A541Cc25675353D39";
 
-const CHAIN_CONFIG = {
+interface ChainConfig {
+  chainId: string;
+  name: string;
+  currency: string;
+  rpcUrl: string;
+  nativeCurrency: {
+    name: string;
+    symbol: string;
+    decimals: number;
+  };
+}
+
+const CHAIN_CONFIG: Record<string, ChainConfig> = {
   base: {
-    chainId: "0x2105", // Base Chain ID
+    chainId: "0x2105",
     name: "Base",
     currency: "ETH",
-    rpcUrl: "https://mainnet.base.org"
+    rpcUrl: "https://mainnet.base.org",
+    nativeCurrency: {
+      name: "ETH",
+      symbol: "ETH",
+      decimals: 18
+    }
   },
   degen: {
-    chainId: "0x27BC86AA", // Updated Degen Chain ID (666666666 in hex)
+    chainId: "0x27BC86AA",
     name: "Degen",
     currency: "DEGEN",
     rpcUrl: "https://rpc.degen.tips",
