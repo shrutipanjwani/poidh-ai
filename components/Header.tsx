@@ -6,10 +6,6 @@ import { useLogin, useLogout, usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import React from "react";
 
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(" ");
-}
-
 const Header = () => {
   const router = useRouter();
   const { user } = usePrivy();
@@ -75,7 +71,7 @@ const Header = () => {
         )}
       </div>
 
-      <MenuItems className="absolute right-0 z-10 mt-2 w-56 origin-top-right divide-y divide-gray-800 rounded-md bg-black shadow-lg ring-1 ring-white ring-opacity-5 transition focus:outline-none">
+      <MenuItems className="absolute right-0 z-10 mt-2 origin-top-right divide-y divide-gray-800 rounded-md bg-black shadow-lg ring-1 ring-white ring-opacity-5 transition focus:outline-none">
         {user && getUserDisplayInfo() && (
           <div className="px-4 py-3 font-polysans">
             <p className="text-white text-sm">Signed in as</p>
@@ -87,18 +83,14 @@ const Header = () => {
 
         <div className="py-1">
           <MenuItem>
-            {({ active }) => (
-              <button
-                type="button"
-                className={classNames(
-                  active ? "bg-black text-gray-200" : "text-gray-200",
-                  "block w-full px-4 py-2 text-left text-sm font-polysans"
-                )}
-                onClick={logout}
-              >
-                Sign out
-              </button>
-            )}
+            <button
+              type="button"
+              className="bg-black text-gray-200
+                  block w-full px-4 py-2 text-left text-sm"
+              onClick={logout}
+            >
+              Sign out
+            </button>
           </MenuItem>
         </div>
       </MenuItems>

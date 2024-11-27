@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { usePrivy } from "@privy-io/react-auth";
 import { ethers } from "ethers";
 import abi from "../constants/abi/abi";
 import Button from "./Button";
@@ -9,7 +8,6 @@ import Button from "./Button";
 const contractAddress = "0xb502c5856F7244DccDd0264A541Cc25675353D39";
 
 export default function BountyForm() {
-  const { user } = usePrivy();
   const [prompt, setPrompt] = useState("");
   const [loadingGenerate, setLoadingGenerate] = useState(false);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
@@ -25,16 +23,16 @@ export default function BountyForm() {
   const generateBounty = async () => {
     setLoadingGenerate(true);
     try {
-      const response = await fetch('/api/generate-bounty', {
-        method: 'POST',
+      const response = await fetch("/api/generate-bounty", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ idea: prompt }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate bounty');
+        throw new Error("Failed to generate bounty");
       }
 
       const bountyData = await response.json();
@@ -64,7 +62,7 @@ export default function BountyForm() {
         generatedBounty.title,
         generatedBounty.description,
         {
-          value: ethers.utils.parseEther(amount)
+          value: ethers.utils.parseEther(amount),
         }
       );
 
@@ -96,8 +94,8 @@ export default function BountyForm() {
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Describe your bounty idea..."
-          className="w-full h-32 p-4 border rounded-lg focus:ring-2 focus:ring-blue-500"
+          placeholder="Describe your bounty idea... (e.g., 'I need a smart contract that handles token staking')"
+          className="w-full h-32 p-4 text-gray-900 border rounded-lg focus:ring-2 focus:ring-gray-200 outline-none"
         />
         <Button
           onClick={generateBounty}
@@ -111,39 +109,48 @@ export default function BountyForm() {
       {generatedBounty && (
         <div className="space-y-6 bg-white p-6 rounded-lg shadow">
           <div>
-            <h3 className="font-semibold mb-2">Generated Title</h3>
-            <p className="bg-gray-50 p-3 rounded">{generatedBounty.title}</p>
+            <h3 className="font-semibold text-gray-900 mb-2">
+              Generated Title
+            </h3>
+            <p className="bg-gray-50 p-3 rounded text-gray-700">
+              {generatedBounty.title}
+            </p>
           </div>
-          
+
           <div>
-            <h3 className="font-semibold mb-2">Generated Description</h3>
-            <p className="bg-gray-50 p-3 rounded">{generatedBounty.description}</p>
+            <h3 className="font-semibold text-gray-900 mb-2">
+              Generated Description
+            </h3>
+            <p className="bg-gray-50 p-3 rounded text-gray-700">
+              {generatedBounty.description}
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm text-gray-900 font-medium mb-2">
                 Chain
               </label>
               <select
                 value={chain}
                 onChange={(e) => setChain(e.target.value)}
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded text-gray-700 outline-none"
               >
                 <option value="base">Base</option>
-                <option value="ethereum">Ethereum</option>
+                <option value="degen">Degen</option>
+                <option value="degen">Arbitrum</option>
               </select>
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium text-gray-900 mb-2">
                 Amount (ETH)
               </label>
               <input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded text-gray-700"
                 placeholder="0.1"
                 step="0.01"
               />
@@ -175,4 +182,4 @@ export default function BountyForm() {
       )}
     </div>
   );
-} 
+}
