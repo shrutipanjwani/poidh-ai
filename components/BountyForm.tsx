@@ -11,7 +11,8 @@ const contractAddress = "0xb502c5856F7244DccDd0264A541Cc25675353D39";
 export default function BountyForm() {
   const { user } = usePrivy();
   const [prompt, setPrompt] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingGenerate, setLoadingGenerate] = useState(false);
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [generatedBounty, setGeneratedBounty] = useState<{
     title: string;
     description: string;
@@ -22,7 +23,7 @@ export default function BountyForm() {
   const [bountyId, setBountyId] = useState<string | null>(null);
 
   const generateBounty = async () => {
-    setLoading(true);
+    setLoadingGenerate(true);
     try {
       const response = await fetch('/api/generate-bounty', {
         method: 'POST',
@@ -45,14 +46,15 @@ export default function BountyForm() {
       console.error("Error generating bounty:", error);
       // Optionally add user-facing error handling here
     } finally {
-      setLoading(false);
+      setLoadingGenerate(false);
     }
   };
 
   const handleSubmit = async () => {
     if (!generatedBounty) return;
     setTxSuccess(false);
-    
+    setLoadingSubmit(true);
+
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
@@ -76,10 +78,15 @@ export default function BountyForm() {
         const id = bountyCreatedEvent.args.id.toString();
         setBountyId(id);
         setTxSuccess(true);
+        setPrompt("");
+        setAmount("");
+        setGeneratedBounty(null);
       }
       
     } catch (error) {
       console.error("Error creating bounty:", error);
+    } finally {
+      setLoadingSubmit(false);
     }
   };
 
@@ -94,10 +101,10 @@ export default function BountyForm() {
         />
         <Button
           onClick={generateBounty}
-          disabled={!prompt || loading}
+          disabled={!prompt || loadingGenerate}
           className="w-full"
         >
-          {loading ? "Generating..." : "Generate Bounty"}
+          {loadingGenerate ? "Generating..." : "Generate Bounty"}
         </Button>
       </div>
 
@@ -145,10 +152,10 @@ export default function BountyForm() {
 
           <Button
             onClick={handleSubmit}
-            disabled={!amount || !chain}
+            disabled={!amount || !chain || loadingSubmit}
             className="w-full"
           >
-            Create Bounty
+            {loadingSubmit ? "Processing..." : "Create Bounty"}
           </Button>
 
           {txSuccess && bountyId && (
