@@ -56,6 +56,7 @@ export default function BountyForm() {
   const [chain, setChain] = useState("base");
   const [txSuccess, setTxSuccess] = useState(false);
   const [bountyId, setBountyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const generateBounty = async () => {
     setLoadingGenerate(true);
@@ -89,6 +90,7 @@ export default function BountyForm() {
     if (!generatedBounty) return;
     setTxSuccess(false);
     setLoadingSubmit(true);
+    setError(null);
 
     try {
       // Check if MetaMask is installed
@@ -130,20 +132,32 @@ export default function BountyForm() {
           setTxSuccess(true);
           setAmount("");
           setPrompt("");
+          setGeneratedBounty(null);
         }
       } catch (waitError: any) {
         if (waitError?.transactionHash) {
           setTxSuccess(true);
           setAmount("");
           setPrompt("");
-          console.log("Transaction successful despite error:", waitError.transactionHash);
+          setGeneratedBounty(null);
+          setBountyId('pending');
+          console.log("Transaction successful:", waitError.transactionHash);
         } else {
           throw waitError;
         }
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating bounty:", error);
+      if (!error?.transactionHash) {
+        setError(error?.message || "Failed to create bounty. Please try again.");
+      } else {
+        setTxSuccess(true);
+        setAmount("");
+        setPrompt("");
+        setGeneratedBounty(null);
+        setBountyId('pending');
+      }
     } finally {
       setLoadingSubmit(false);
     }
@@ -274,6 +288,11 @@ export default function BountyForm() {
               >
                 View your bounty →
               </a>
+            </div>
+          )}
+          {error && (
+            <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-lg">
+              <p className="mb-2">{error}</p>
             </div>
           )}
         </div>
