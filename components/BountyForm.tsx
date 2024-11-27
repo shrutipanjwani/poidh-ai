@@ -18,6 +18,8 @@ export default function BountyForm() {
   } | null>(null);
   const [amount, setAmount] = useState("");
   const [chain, setChain] = useState("base");
+  const [txSuccess, setTxSuccess] = useState(false);
+  const [bountyId, setBountyId] = useState<string | null>(null);
 
   const generateBounty = async () => {
     setLoading(true);
@@ -49,7 +51,8 @@ export default function BountyForm() {
 
   const handleSubmit = async () => {
     if (!generatedBounty) return;
-
+    setTxSuccess(false);
+    
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
@@ -63,8 +66,18 @@ export default function BountyForm() {
         }
       );
 
-      await tx.wait();
-      console.log("Bounty created successfully");
+      const receipt = await tx.wait();
+      
+      const bountyCreatedEvent = receipt.events?.find(
+        (event: any) => event.event === "BountyCreated"
+      );
+      
+      if (bountyCreatedEvent) {
+        const id = bountyCreatedEvent.args.id.toString();
+        setBountyId(id);
+        setTxSuccess(true);
+      }
+      
     } catch (error) {
       console.error("Error creating bounty:", error);
     }
@@ -137,6 +150,20 @@ export default function BountyForm() {
           >
             Create Bounty
           </Button>
+
+          {txSuccess && bountyId && (
+            <div className="mt-4 p-4 bg-green-50 text-green-700 rounded-lg">
+              <p className="mb-2">Bounty created successfully!</p>
+              <a 
+                href={`https://poidh.xyz/base/bounty/${bountyId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                View your bounty →
+              </a>
+            </div>
+          )}
         </div>
       )}
     </div>
