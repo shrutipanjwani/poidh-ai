@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import abi from "../constants/abi/abi";
 import Button from "./Button";
@@ -130,16 +130,10 @@ export default function BountyForm() {
           const id = bountyCreatedEvent.args.id.toString();
           setBountyId(id);
           setTxSuccess(true);
-          setAmount("");
-          setPrompt("");
-          setGeneratedBounty(null);
         }
       } catch (waitError: any) {
         if (waitError?.transactionHash) {
           setTxSuccess(true);
-          setAmount("");
-          setPrompt("");
-          setGeneratedBounty(null);
           setBountyId('pending');
           console.log("Transaction successful:", waitError.transactionHash);
         } else {
@@ -153,15 +147,25 @@ export default function BountyForm() {
         setError(error?.message || "Failed to create bounty. Please try again.");
       } else {
         setTxSuccess(true);
-        setAmount("");
-        setPrompt("");
-        setGeneratedBounty(null);
         setBountyId('pending');
       }
     } finally {
       setLoadingSubmit(false);
     }
   };
+
+  // Add a useEffect to reset the form after showing the success message
+  useEffect(() => {
+    if (txSuccess) {
+      const timer = setTimeout(() => {
+        setAmount("");
+        setPrompt("");
+        setGeneratedBounty(null);
+      }, 500000); // Reset the form after 5 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [txSuccess]);
 
   const switchNetwork = async (selectedChain: string) => {
     try {
