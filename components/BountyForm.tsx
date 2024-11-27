@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { ethers } from "ethers";
+import abi from "../constants/abi/abi";
 import Button from "./Button";
+
+const contractAddress = "0xb502c5856F7244DccDd0264A541Cc25675353D39";
 
 export default function BountyForm() {
   const [prompt, setPrompt] = useState("");
@@ -11,21 +15,31 @@ export default function BountyForm() {
     description: string;
   } | null>(null);
   const [amount, setAmount] = useState("");
-  const [chain, setChain] = useState("base"); // base, ethereum, etc
+  const [chain, setChain] = useState("base");
 
   const generateBounty = async () => {
     setLoading(true);
     try {
-      // Here you would call your AI endpoint
-      // For now, let's simulate an API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await fetch("/api/generate-bounty", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ idea: prompt }),
+      });
 
+      if (!response.ok) {
+        throw new Error("Failed to generate bounty");
+      }
+
+      const bountyData = await response.json();
       setGeneratedBounty({
-        title: "Sample Generated Title",
-        description: "Sample generated description based on your prompt...",
+        title: bountyData.title,
+        description: bountyData.description,
       });
     } catch (error) {
       console.error("Error generating bounty:", error);
+      // Optionally add user-facing error handling here
     } finally {
       setLoading(false);
     }
@@ -35,12 +49,20 @@ export default function BountyForm() {
     if (!generatedBounty) return;
 
     try {
-      // Here you would call the contract to create the bounty
-      console.log("Creating bounty:", {
-        ...generatedBounty,
-        amount,
-        chain,
-      });
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, abi, signer);
+
+      const tx = await contract.createSoloBounty(
+        generatedBounty.title,
+        generatedBounty.description,
+        {
+          value: ethers.utils.parseEther(amount),
+        }
+      );
+
+      await tx.wait();
+      console.log("Bounty created successfully");
     } catch (error) {
       console.error("Error creating bounty:", error);
     }
@@ -95,7 +117,8 @@ export default function BountyForm() {
                 className="w-full p-2 border rounded text-gray-700 outline-none"
               >
                 <option value="base">Base</option>
-                <option value="ethereum">Ethereum</option>
+                <option value="degen">Degen</option>
+                <option value="degen">Arbitrum</option>
               </select>
             </div>
 
