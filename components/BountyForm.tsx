@@ -7,6 +7,26 @@ import Button from "./Button";
 
 const contractAddress = "0xb502c5856F7244DccDd0264A541Cc25675353D39";
 
+const CHAIN_CONFIG = {
+  base: {
+    chainId: "0x2105", // Base Chain ID
+    name: "Base",
+    currency: "ETH",
+    rpcUrl: "https://mainnet.base.org"
+  },
+  degen: {
+    chainId: "0x27BC86AA", // Updated Degen Chain ID (666666666 in hex)
+    name: "Degen",
+    currency: "DEGEN",
+    rpcUrl: "https://rpc.degen.tips",
+    nativeCurrency: {
+      name: "DEGEN",
+      symbol: "DEGEN",
+      decimals: 18
+    }
+  }
+};
+
 export default function BountyForm() {
   const [prompt, setPrompt] = useState("");
   const [loadingGenerate, setLoadingGenerate] = useState(false);
@@ -56,36 +76,78 @@ export default function BountyForm() {
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
-      const contract = new ethers.Contract(contractAddress, abi, signer);
+      
+      const currentContractAddress = chain === "degen" 
+        ? "0x2445BfFc6aB9EEc6C562f8D7EE325CddF1780814" 
+        : contractAddress;
+
+      const contract = new ethers.Contract(currentContractAddress, abi, signer);
 
       const tx = await contract.createSoloBounty(
         generatedBounty.title,
         generatedBounty.description,
         {
-          value: ethers.utils.parseEther(amount),
+          value: ethers.utils.parseEther(amount)
         }
       );
 
       const receipt = await tx.wait();
-      
+
       const bountyCreatedEvent = receipt.events?.find(
         (event: any) => event.event === "BountyCreated"
       );
-      
+
       if (bountyCreatedEvent) {
         const id = bountyCreatedEvent.args.id.toString();
         setBountyId(id);
         setTxSuccess(true);
-        setPrompt("");
         setAmount("");
-        setGeneratedBounty(null);
+        setPrompt("");
       }
-      
+
     } catch (error) {
       console.error("Error creating bounty:", error);
     } finally {
       setLoadingSubmit(false);
     }
+  };
+
+  const switchNetwork = async (selectedChain: string) => {
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const chainConfig = CHAIN_CONFIG[selectedChain as keyof typeof CHAIN_CONFIG];
+      
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: chainConfig.chainId }],
+      });
+      
+      setChain(selectedChain);
+    } catch (error: any) {
+      if (error.code === 4902) {
+        // Chain not added to MetaMask
+        try {
+          const chainConfig = CHAIN_CONFIG[selectedChain as keyof typeof CHAIN_CONFIG];
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: chainConfig.chainId,
+              chainName: chainConfig.name,
+              rpcUrls: [chainConfig.rpcUrl],
+              nativeCurrency: chainConfig.nativeCurrency
+            }],
+          });
+        } catch (addError) {
+          console.error('Error adding chain:', addError);
+        }
+      }
+      console.error('Error switching chain:', error);
+    }
+  };
+
+  const handleChainChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedChain = e.target.value;
+    switchNetwork(selectedChain);
   };
 
   return (
@@ -94,7 +156,7 @@ export default function BountyForm() {
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Describe your bounty idea... (e.g., 'I need a smart contract that handles token staking')"
+          placeholder="Describe your bounty idea... (e.g., 'Post an image of your dog with a hat')"
           className="w-full h-32 p-4 text-gray-900 border rounded-lg focus:ring-2 focus:ring-gray-200 outline-none"
         />
         <Button
@@ -133,18 +195,17 @@ export default function BountyForm() {
               </label>
               <select
                 value={chain}
-                onChange={(e) => setChain(e.target.value)}
+                onChange={handleChainChange}
                 className="w-full p-2 border rounded text-gray-700 outline-none"
               >
                 <option value="base">Base</option>
                 <option value="degen">Degen</option>
-                <option value="degen">Arbitrum</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-2">
-                Amount (ETH)
+                Amount ({CHAIN_CONFIG[chain as keyof typeof CHAIN_CONFIG].currency})
               </label>
               <input
                 type="number"
@@ -169,7 +230,7 @@ export default function BountyForm() {
             <div className="mt-4 p-4 bg-green-50 text-green-700 rounded-lg">
               <p className="mb-2">Bounty created successfully!</p>
               <a 
-                href={`https://poidh.xyz/base/bounty/${bountyId}`}
+                href={`https://poidh.xyz/${chain}/bounty/${bountyId}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:underline"
