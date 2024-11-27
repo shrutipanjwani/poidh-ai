@@ -91,6 +91,16 @@ export default function BountyForm() {
     setLoadingSubmit(true);
 
     try {
+      // Check if MetaMask is installed
+      if (!window.ethereum) {
+        throw new Error("Please install MetaMask to create bounties");
+      }
+
+      // Request account access if needed
+      await window.ethereum.request({ 
+        method: 'eth_requestAccounts' 
+      });
+
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
       
