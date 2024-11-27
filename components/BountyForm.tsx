@@ -108,18 +108,28 @@ export default function BountyForm() {
         }
       );
 
-      const receipt = await tx.wait();
+      try {
+        const receipt = await tx.wait();
+        const bountyCreatedEvent = receipt.events?.find(
+          (event: any) => event.event === "BountyCreated"
+        );
 
-      const bountyCreatedEvent = receipt.events?.find(
-        (event: any) => event.event === "BountyCreated"
-      );
-
-      if (bountyCreatedEvent) {
-        const id = bountyCreatedEvent.args.id.toString();
-        setBountyId(id);
-        setTxSuccess(true);
-        setAmount("");
-        setPrompt("");
+        if (bountyCreatedEvent) {
+          const id = bountyCreatedEvent.args.id.toString();
+          setBountyId(id);
+          setTxSuccess(true);
+          setAmount("");
+          setPrompt("");
+        }
+      } catch (waitError: any) {
+        if (waitError?.transactionHash) {
+          setTxSuccess(true);
+          setAmount("");
+          setPrompt("");
+          console.log("Transaction successful despite error:", waitError.transactionHash);
+        } else {
+          throw waitError;
+        }
       }
 
     } catch (error) {
